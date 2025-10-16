@@ -1,19 +1,20 @@
-import google.generativeai as genai, os, base64
-from dotenv import load_dotenv
+from google import genai
+from google.genai import types
 
-load_dotenv()
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+client = genai.Client()
 
-text = "Hello! This is a test podcast in English."
-model = genai.GenerativeModel("models/gemini-2.0-flash-tts")
-
-response = model.generate_content(
-    [text],
-    generation_config={"response_mime_type": "audio/mpeg"}
+response = client.models.generate_content(
+    model="gemini-2.5-flash-preview-tts",
+    contents="Hello world! This is a test speech.",
+    config=types.GenerateContentConfig(
+        response_modalities=["AUDIO"],
+        speech_config=types.SpeechConfig(
+            voice_config=types.VoiceConfig(
+                prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name="Puck")
+            )
+        )
+    ),
 )
 
-audio_data = base64.b64decode(response.candidates[0].content[0].binary)
-with open("test.mp3", "wb") as f:
-    f.write(audio_data)
-
-print("✅ Generated test.mp3 successfully")
+# Access binary PCM data:
+pcm_data = response.candidates[0].content.parts[0].inline_data.data
