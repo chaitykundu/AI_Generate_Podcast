@@ -27,6 +27,9 @@ language = st.selectbox(
     ["English", "Spanish", "French", "German", "Hindi", "Bengali", "Japanese", "Korean"]
 )
 
+voice_name = st.selectbox("🗣️ Choose Voice:",
+                          ["Fenrir", "Puck", "Charon", "Kore", "Artemis", "Achird"])
+
 # 🎙️ Generate button
 if st.button("🎙️ Generate Podcast"):
     if not topic.strip():
@@ -46,7 +49,7 @@ if st.button("🎙️ Generate Podcast"):
 
                 # 🎤 Step 2: Generate audio
                 with st.spinner("🎤 Generating Audio..."):
-                    audio_path = generate_audio(script, language, topic)
+                    audio_path = generate_audio(script, language, topic, voice_name)
 
                 if os.path.exists(audio_path):
                     st.audio(audio_path, format="audio/mp3")

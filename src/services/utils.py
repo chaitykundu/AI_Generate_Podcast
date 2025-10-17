@@ -14,6 +14,12 @@ def mix_with_background(speech_path: str, music_path: str, output_path: str, mus
     Returns:
         str: The path to the mixed audio file.
     """
+
+     # ✅ Add this so Pydub always knows where ffmpeg is
+    AudioSegment.converter = r"C:\ffmpeg\bin\ffmpeg.exe"
+    AudioSegment.ffmpeg = r"C:\ffmpeg\bin\ffmpeg.exe"
+    AudioSegment.ffprobe = r"C:\ffmpeg\bin\ffprobe.exe"
+    
     # Load both audio files
     speech = AudioSegment.from_file(speech_path)
     music = AudioSegment.from_file(music_path)

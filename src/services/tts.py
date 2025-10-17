@@ -30,31 +30,27 @@ def generate_audio(script_text: str, language: str, topic: str) -> str:
             response_modalities=["AUDIO"],
             speech_config=types.SpeechConfig(
                 voice_config=types.VoiceConfig(
-                    prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name="Puck")
+                    prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name="Callirrhoe")
                 )
             ),
         ),
     )
 
-    # ✅ Defensive extraction
+     # ✅ Defensive extraction
     if not response.candidates:
         raise ValueError("❌ No candidates returned — check your API key and model access.")
 
     candidate = response.candidates[0]
     if not candidate.content or not getattr(candidate.content, "parts", None):
-        raise ValueError(
-            f"❌ No audio returned — got: {candidate.finish_reason or 'unknown reason'}"
-        )
+        raise ValueError(f"❌ No audio returned — got: {candidate.finish_reason or 'unknown reason'}")
 
-    audio_part = next(
-        (p for p in candidate.content.parts if getattr(p, "inline_data", None)), None
-    )
+    audio_part = next((p for p in candidate.content.parts if getattr(p, "inline_data", None)), None)
     if not audio_part:
         raise ValueError("❌ No inline audio data found in the response.")
 
     pcm_data = audio_part.inline_data.data
 
-    # ✅ Save the audio as WAV
+    # ✅ Save raw speech as WAV
     output_dir = os.path.join("podcasts")
     os.makedirs(output_dir, exist_ok=True)
     safe_topic = topic.strip().replace(" ", "_")
@@ -63,10 +59,11 @@ def generate_audio(script_text: str, language: str, topic: str) -> str:
     save_wave(speech_path, pcm_data)
     print(f"✅ Raw speech saved: {speech_path}")
 
-    # ✅ Mix with background
-    music_path = os.path.join("assets", "music", "background1.mp3")
+    # ✅ Mix with background music
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    music_path = os.path.join(BASE_DIR, "music", "background1.mp3")
     output_path = speech_path.replace(".wav", "_with_music.mp3")
-    final_path = mix_with_background(speech_path, music_path, output_path, music_volume_db=-15)
-
-    print(f"✅ Final podcast (with music): {final_path}")
-    return os.path.abspath(final_path)
+    
+    mix_with_background(speech_path, music_path, output_path)
+    print(f"✅ Final podcast (with music): {output_path}")
+    return os.path.abspath(output_path)
