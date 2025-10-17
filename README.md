@@ -65,3 +65,12 @@ streamlit run src/app.py
 
 
 Then open the browser link (usually http://localhost:8501) to access your app.
+
+🎧 How It Works
+
+1️⃣ Enter a podcast topic and select a language.
+2️⃣ The AI generates a 10–15 minute podcast script using Gemini 2.5 Flash.
+3️⃣ Select your preferred voice (e.g. Fenrir, Puck, Artemis).
+4️⃣ The system converts the script to speech using Gemini 2.5 Flash TTS.
+5️⃣ Background music is added for a professional sound.
+6️⃣ Download your final MP3 podcast.
