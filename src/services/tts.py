@@ -14,7 +14,7 @@ def save_wave(filename: str, pcm_data: bytes, rate: int = 24000):
         wf.writeframes(pcm_data)
 
 
-def generate_audio(script_text: str, language: str, topic: str) -> str:
+def generate_audio(script_text: str, language: str, topic: str,voice_name: str = "Fenrir") -> str:
     """
     Generates podcast audio using Gemini 2.5 Flash Preview TTS,
     and mixes it with background music.
