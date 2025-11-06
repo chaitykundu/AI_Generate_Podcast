@@ -2,7 +2,7 @@ import os
 import google.generativeai as genai
 
 # ✅ Configure Gemini API key once
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 def generate_script(topic: str, language: str) -> str:
     """
@@ -15,7 +15,7 @@ def generate_script(topic: str, language: str) -> str:
     Returns:
         str: The generated podcast script text.
     """
-    model = genai.GenerativeModel("gemini-2.5-flash")
+    model = genai.GenerativeModel("gemini-2.0-flash")
 
     prompt = f"""
     You are a professional podcast host and storyteller.

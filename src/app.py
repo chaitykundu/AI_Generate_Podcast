@@ -1,67 +1,78 @@
-import streamlit as st
+# app.py
+from flask import Flask, request, jsonify, send_file, render_template_string
+import os
 from services.gemini_text import generate_script
 from services.tts import generate_audio
 
-from dotenv import load_dotenv
-import google.generativeai as genai
-import os
+app = Flask(__name__)
 
-# 🌿 Load environment variables
-load_dotenv()
+# ----------------------
+# Root page with a simple form for testing
+# ----------------------
+@app.route("/", methods=["GET"])
+def index():
+    html = """
+    <h1>🎧 AI Podcast Generator</h1>
+    <form method="POST" action="/generate_audio_form">
+        Topic: <input type="text" name="topic" required><br>
+        Language: <input type="text" name="language" value="English"><br>
+        Voice: <input type="text" name="voice_name" value="Fenrir"><br>
+        <input type="submit" value="Generate Podcast">
+    </form>
+    """
+    return render_template_string(html)
 
-# 🔐 Configure Gemini API
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+@app.route("/generate_audio_form", methods=["POST"])
+def generate_audio_form():
+    topic = request.form.get("topic")
+    language = request.form.get("language", "English")
+    voice_name = request.form.get("voice_name", "Fenrir")
 
-# 🎨 Streamlit UI setup
-st.set_page_config(page_title="🎙️ AI Multilingual Podcast Generator", layout="wide")
-st.title("🎧 AI Multilingual Podcast Generator")
+    try:
+        script = generate_script(topic, language)
+        audio_path = generate_audio(script, language, topic, voice_name)
+        return send_file(audio_path, as_attachment=True)
+    except Exception as e:
+        return f"❌ Error: {e}", 500
 
-st.markdown("""
-Generate **10–15 minute podcasts** in your preferred language using **Gemini 2.5 Flash + TTS**.
-""")
+# ----------------------
+# API: Generate script (JSON)
+# ----------------------
+@app.route("/generate_script", methods=["POST"])
+def generate_script_route():
+    data = request.json
+    topic = data.get("topic")
+    language = data.get("language", "English")
 
-# 🎯 User input
-topic = st.text_input("🎯 Enter Podcast Topic:")
-language = st.selectbox(
-    "🌍 Select Language:",
-    ["English", "Spanish", "French", "German", "Hindi", "Bengali", "Japanese", "Korean"]
-)
+    if not topic:
+        return jsonify({"error": "Topic is required"}), 400
 
-voice_name = st.selectbox("🗣️ Choose Voice:",
-                          ["Fenrir", "Puck", "Charon", "Kore", "Artemis", "Achird"])
+    try:
+        script = generate_script(topic, language)
+        return jsonify({"script": script})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-# 🎙️ Generate button
-if st.button("🎙️ Generate Podcast"):
-    if not topic.strip():
-        st.warning("⚠️ Please enter a topic before generating.")
-    else:
-        try:
-            # 🧠 Step 1: Generate script
-            with st.spinner("🧠 Generating Podcast Script..."):
-                script = generate_script(topic, language)
+# ----------------------
+# API: Generate audio (JSON)
+# ----------------------
+@app.route("/generate_audio", methods=["POST"])
+def generate_audio_route():
+    data = request.json
+    script = data.get("script")
+    language = data.get("language", "English")
+    topic = data.get("topic")
+    voice_name = data.get("voice_name", "Fenrir")
 
-            if not script:
-                st.error("❌ Script generation failed. Please try again.")
-            else:
-                st.success("✅ Script Generated Successfully!")
-                st.subheader("📝 Podcast Script")
-                st.text_area("Generated Script", script, height=300)
+    if not script or not topic:
+        return jsonify({"error": "Script and topic are required"}), 400
 
-                # 🎤 Step 2: Generate audio
-                with st.spinner("🎤 Generating Audio..."):
-                    audio_path = generate_audio(script, language, topic, voice_name)
+    try:
+        audio_path = generate_audio(script, language, topic, voice_name)
+        return send_file(audio_path, as_attachment=True)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-                if os.path.exists(audio_path):
-                    st.audio(audio_path, format="audio/mp3")
-                    with open(audio_path, "rb") as audio_file:
-                        st.download_button(
-                            "⬇️ Download Podcast",
-                            data=audio_file,
-                            file_name=os.path.basename(audio_path),
-                            mime="audio/mpeg"
-                        )
-                    st.success("🎧 Podcast ready for playback and download!")
-                else:
-                    st.error("❌ Audio generation failed. Please try again.")
-        except Exception as e:
-            st.error(f"An error occurred: {e}")
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
